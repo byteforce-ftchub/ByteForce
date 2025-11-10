@@ -1,0 +1,40 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name = "OdometryTelemetryTest", group = "Test")
+public class OdometryTelemetryTest extends LinearOpMode {
+
+    private DcMotor outtake, ramp, intake; // odometry pods
+
+    @Override
+    public void runOpMode() {
+        // Map odometry motors
+        outtake = hardwareMap.get(DcMotor.class, "outtake"); // left odometry
+        ramp = hardwareMap.get(DcMotor.class, "ramp");       // right odometry
+        intake = hardwareMap.get(DcMotor.class, "intake");   // strafe odometry
+
+        // Reset encoders
+        outtake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ramp.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        ramp.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            // Telemetry
+            telemetry.addData("Left Odometry (outtake)", outtake.getCurrentPosition());
+            telemetry.addData("Right Odometry (ramp)", ramp.getCurrentPosition());
+            telemetry.addData("Strafe Odometry (intake)", intake.getCurrentPosition());
+            telemetry.update();
+        }
+    }
+}
+
+
