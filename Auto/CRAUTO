@@ -1,0 +1,218 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+
+@Autonomous(name = "CRAuto", group = "Auto")
+public class CRAuto extends LinearOpMode {
+
+    // Drive motors
+    private DcMotor frontLeft, frontRight, backLeft, backRight;
+
+    // Mechanism motors
+    private DcMotor outtake, outtake2, intake, ramp;
+
+    // Servo for blocker
+    private Servo blocker;
+
+    @Override
+    public void runOpMode() {
+
+        // Map all hardware motors/servos
+        frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+        backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
+        backRight  = hardwareMap.get(DcMotor.class, "backRight");
+
+        outtake  = hardwareMap.get(DcMotor.class, "outtake");
+        outtake2 = hardwareMap.get(DcMotor.class, "outtake2");
+        intake   = hardwareMap.get(DcMotor.class, "intake");
+        ramp     = hardwareMap.get(DcMotor.class, "ramp");
+
+        blocker  = hardwareMap.get(Servo.class, "blocker");
+
+        // Reverse motors so robot drives correctly
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        intake.setDirection(DcMotor.Direction.REVERSE);
+        outtake.setDirection(DcMotor.Direction.REVERSE);
+        outtake2.setDirection(DcMotor.Direction.REVERSE);
+
+        // Reset encoders used for movement tracking
+        resetOdo();
+
+        waitForStart();
+
+        if (opModeIsActive()) {
+
+            // Start intake
+            intake.setPower(1.0);
+
+            // --- PRELOAD DUMP ---
+            outtake.setPower(0.72);
+            outtake2.setPower(0.72);
+            blocker.setPosition(0.9);   // open blocker
+
+            moveBackTicks(3000, 0.5);
+            sleep(1000);
+
+            ramp.setPower(0.9);         // run ramp
+            sleep(4000);
+
+            // Stop outtake + close blocker
+            outtake.setPower(0);
+            outtake2.setPower(0);
+            blocker.setPosition(0.4);
+
+            resetOdo();
+
+            // --- MOVE TO NEXT CYCLE ---
+            ramp.setPower(0.9);
+            resetOdo();
+            moveBackTicks(3500, 0.7);
+            sleep(1000);
+
+            // Turn right toward stack/area
+            turnRightTicks(670, 0.5);
+            resetOdo();
+
+            // Strafe to line up
+            strafeRightTicks(2000, 0.5);
+
+            intake.setPower(1.0);
+            moveForwardTicks(3000, 0.5);
+            moveForwardTicks(10000, 0.15);
+            moveBackTicks(500,0.6);
+            ramp.setPower(0);
+            sleep(1000); // Pause 1 sec
+
+            turnLeftTicks(580, 0.5);
+            blocker.setPosition(0.9);
+            sleep(1000); // Pause
+
+            resetOdo();
+
+            outtake.setPower(0.72);
+            outtake2.setPower(0.72);
+            strafeLeftTicks(7000 , 0.6); // Insert your value
+            sleep(1000); // Pause after strafe
+
+// Open blocker + ramp sequence
+            ramp.setPower(0.9);
+
+// Intake reduced power while ramp is running
+            intake.setPower(0.75);
+            sleep(4000);
+
+// Stop everything
+            intake.setPower(0);
+            outtake.setPower(0);
+            outtake2.setPower(0);
+            ramp.setPower(0);
+            blocker.setPosition(0);
+
+            resetOdo();
+
+
+            // Stop before final ramp cycle
+            stopDrive();
+            sleep(1000);
+
+            // End auto
+            stopDrive();
+        }
+    }
+
+    // Reset encoders used as “odometers”
+    private void resetOdo() {
+        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        outtake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ramp.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        ramp.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    // Stop all drive motors
+    private void stopDrive() {
+        frontLeft.setPower(0);
+        backLeft.setPower(0);
+        frontRight.setPower(0);
+        backRight.setPower(0);
+    }
+
+    // Drive backward for encoder distance
+    private void moveBackTicks(int target, double power) {
+        resetOdo();
+        while (opModeIsActive() && Math.abs(intake.getCurrentPosition()) < target) {
+            frontLeft.setPower(-power);
+            backLeft.setPower(-power);
+            frontRight.setPower(-power);
+            backRight.setPower(-power);
+        }
+        stopDrive();
+    }
+
+    // Turn right in place
+    private void turnRightTicks(int target, double power) {
+        resetOdo();
+        while (opModeIsActive() && Math.abs(outtake.getCurrentPosition()) < target) {
+            frontLeft.setPower(power);
+            backLeft.setPower(power);
+            frontRight.setPower(-power);
+            backRight.setPower(-power);
+        }
+        stopDrive();
+    }
+
+    // Turn left in place
+    private void turnLeftTicks(int target, double power) {
+        resetOdo();
+        while (opModeIsActive() && Math.abs(outtake.getCurrentPosition()) < target) {
+            frontLeft.setPower(-power);
+            backLeft.setPower(-power);
+            frontRight.setPower(power);
+            backRight.setPower(power);
+        }
+        stopDrive();
+    }
+
+    // Strafe right (mecanum wheels)
+    private void strafeRightTicks(int target, double power) {
+        resetOdo();
+        while (opModeIsActive() && Math.abs(ramp.getCurrentPosition()) < target) {
+            frontLeft.setPower(power);
+            backLeft.setPower(-power);
+            frontRight.setPower(-power);
+            backRight.setPower(power);
+        }
+        stopDrive();
+    }
+
+    // Strafe left
+    private void strafeLeftTicks(int target, double power) {
+        resetOdo();
+        while (opModeIsActive() && Math.abs(ramp.getCurrentPosition()) < target) {
+            frontLeft.setPower(-power);
+            backLeft.setPower(power);
+            frontRight.setPower(power);
+            backRight.setPower(-power);
+        }
+        stopDrive();
+    }
+
+    // Drive forward for encoder distance
+    private void moveForwardTicks(int target, double power) {
+        resetOdo();
+        while (opModeIsActive() && Math.abs(intake.getCurrentPosition()) < target) {
+            frontLeft.setPower(power);
+            backLeft.setPower(power);
+            frontRight.setPower(power);
+            backRight.setPower(power);
+        }
+        stopDrive();
+    }
+}
